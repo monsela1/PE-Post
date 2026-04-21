@@ -7,6 +7,7 @@ function App() {
   const [selectedPage, setSelectedPage] = useState(null);
   const [postContent, setPostContent] = useState('');
   const [status, setStatus] = useState('');
+  const [activeTab, setActiveTab] = useState('menu'); // 'menu' ឬ 'post'
 
   const FACEBOOK_APP_ID = '1520516662947333';
 
@@ -44,81 +45,106 @@ function App() {
     }, { scope: 'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts' });
   };
 
-  // 🔴 មុខងារបញ្ជាទៅ Facebook ឱ្យផុស
   const handlePost = () => {
     if (!selectedPage) return alert("សូមជ្រើសរើស Page សិន!");
-    if (!postContent) return alert("សូមសរសេរអ្វីមួយមុននឹងផុស!");
+    if (!postContent) return alert("សូមសរសេរ Caption សិន!");
 
-    setStatus('កំពុងផុស...');
-
-    window.FB.api(
-      `/${selectedPage.id}/feed`,
-      'POST',
-      {
-        message: postContent,
-        access_token: selectedPage.access_token
-      },
-      (response) => {
-        if (response && !response.error) {
-          setStatus('✅ ផុសជោគជ័យនៅលើ Page: ' + selectedPage.name);
-          setPostContent('');
-        } else {
-          console.error(response.error);
-          setStatus('❌ ផុសអត់បានទេ: ' + response.error.message);
-        }
+    setStatus('⌛ កំពុងដំណើរការ...');
+    window.FB.api(`/${selectedPage.id}/feed`, 'POST', {
+      message: postContent,
+      access_token: selectedPage.access_token
+    }, (response) => {
+      if (response && !response.error) {
+        setStatus('✅ ផុសជោគជ័យ!');
+        setPostContent('');
+      } else {
+        setStatus('❌ បរាជ័យ: ' + (response.error.message || "Unknown Error"));
       }
-    );
+    });
   };
 
+  const CardButton = ({ title, icon, color, onClick }) => (
+    <div 
+      onClick={onClick}
+      style={{
+        flex: 1,
+        background: '#fff',
+        borderRadius: '20px',
+        padding: '25px 10px',
+        textAlign: 'center',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+        cursor: 'pointer',
+        border: '1px solid #f0f0f0',
+        margin: '5px'
+      }}
+    >
+      <div style={{ fontSize: '40px', marginBottom: '10px', color: color }}>{icon}</div>
+      <div style={{ fontWeight: '600', color: '#444' }}>{title}</div>
+    </div>
+  );
+
   return (
-    <div style={{ padding: '15px', fontFamily: 'sans-serif', maxWidth: '500px', margin: '0 auto' }}>
-      <h1 style={{ color: '#1877F2', textAlign: 'center' }}>PE Post 🚀</h1>
-      
+    <div style={{ padding: '20px', fontFamily: '-apple-system, sans-serif', maxWidth: '500px', margin: '0 auto', minHeight: '100vh', background: '#f8f9fa' }}>
+      <h2 style={{ textAlign: 'center', color: '#1877F2', marginBottom: '30px' }}>PE Post Studio</h2>
+
       {!isLoggedIn ? (
-        <button onClick={handleLogin} style={{ width: '100%', padding: '15px', backgroundColor: '#1877F2', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold', cursor: 'pointer' }}>
-          Login with Facebook
+        <button onClick={handleLogin} style={{ width: '100%', padding: '15px', background: '#1877F2', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 'bold' }}>
+          Connect Facebook
         </button>
       ) : (
         <div>
-          {/* ផ្ទាំងសរសេរអត្ថបទ */}
-          <div style={{ marginBottom: '20px', padding: '15px', background: '#f9f9f9', borderRadius: '15px' }}>
-            <h4>សរសេរអ្វីដែលអ្នកចង់ផុស៖</h4>
-            <textarea 
-              style={{ width: '100%', height: '100px', padding: '10px', borderRadius: '10px', border: '1px solid #ddd', boxSizing: 'border-box' }}
-              placeholder="តើអ្នកកំពុងគិតអ្វី?"
-              value={postContent}
-              onChange={(e) => setPostContent(e.target.value)}
-            />
-            
-            {selectedPage && (
-              <p style={{ color: '#1877F2', fontWeight: 'bold', marginTop: '10px' }}>📍 កំពុងរៀបចំផុសទៅកាន់៖ {selectedPage.name}</p>
-            )}
-
-            <button 
-              onClick={handlePost}
-              style={{ width: '100%', marginTop: '10px', padding: '12px', backgroundColor: '#28a745', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}
-            >
-              ចុចដើម្បីផុស (Post Now)
-            </button>
-            <p style={{ textAlign: 'center', fontSize: '14px', marginTop: '10px' }}>{status}</p>
+          {/* User Info */}
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '25px', background: '#fff', padding: '12px', borderRadius: '15px' }}>
+            <img src={userData?.picture?.data?.url} style={{ width: '45px', height: '45px', borderRadius: '50%' }} alt="" />
+            <div style={{ marginLeft: '12px' }}>
+              <div style={{ fontWeight: 'bold' }}>{userData?.name}</div>
+              <div style={{ fontSize: '12px', color: 'green' }}>Active Account</div>
+            </div>
           </div>
 
-          <h3>ជ្រើសរើស Page គោលដៅ៖</h3>
-          <div style={{ display: 'grid', gap: '10px' }}>
-            {pages.map((page) => (
-              <div 
-                key={page.id} 
-                onClick={() => setSelectedPage(page)}
-                style={{ 
-                  display: 'flex', alignItems: 'center', padding: '10px', background: selectedPage?.id === page.id ? '#e7f3ff' : '#fff',
-                  border: '1px solid #eee', borderRadius: '10px', cursor: 'pointer'
-                }}
+          {activeTab === 'menu' ? (
+            /* 🔴 ផ្នែក Card Menu ដូចក្នុងរូបថតបង */
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <CardButton 
+                title="Power Editor" 
+                icon="📘" 
+                color="#1877F2" 
+                onClick={() => setActiveTab('post')} 
+              />
+              <CardButton 
+                title="Post Videos" 
+                icon="🎬" 
+                color="#ff4757" 
+                onClick={() => alert('មុខងារផុសវីដេអូ កំពុងរៀបចំ...')} 
+              />
+            </div>
+          ) : (
+            /* 🔴 ផ្នែក Form ផុស */
+            <div style={{ background: '#fff', padding: '20px', borderRadius: '20px', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
+              <button onClick={() => setActiveTab('menu')} style={{ background: 'none', border: 'none', color: '#1877F2', marginBottom: '15px', cursor: 'pointer' }}>← ត្រឡប់ក្រោយ</button>
+              
+              <h4 style={{ margin: '0 0 10px 0' }}>ជ្រើសរើសផេក៖</h4>
+              <select 
+                onChange={(e) => setSelectedPage(pages.find(p => p.id === e.target.value))}
+                style={{ width: '100%', padding: '10px', borderRadius: '10px', marginBottom: '15px', border: '1px solid #ddd' }}
               >
-                <img src={page.picture?.data?.url} style={{ width: '40px', height: '40px', borderRadius: '50%', marginRight: '10px' }} alt="" />
-                <span style={{ fontWeight: selectedPage?.id === page.id ? 'bold' : 'normal' }}>{page.name}</span>
-              </div>
-            ))}
-          </div>
+                <option value="">-- រើស Page --</option>
+                {pages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+
+              <textarea 
+                placeholder="សរសេរ Caption នៅទីនេះ..."
+                value={postContent}
+                onChange={(e) => setPostContent(e.target.value)}
+                style={{ width: '100%', height: '120px', padding: '12px', borderRadius: '12px', border: '1px solid #eee', boxSizing: 'border-box' }}
+              />
+              
+              <button onClick={handlePost} style={{ width: '100%', marginTop: '15px', padding: '12px', background: '#1877F2', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 'bold' }}>
+                Post Now
+              </button>
+              <p style={{ textAlign: 'center', marginTop: '10px', color: status.includes('✅') ? 'green' : 'red' }}>{status}</p>
+            </div>
+          )}
         </div>
       )}
     </div>
