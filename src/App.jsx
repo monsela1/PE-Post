@@ -5,7 +5,7 @@ function App() {
   const [userData, setUserData] = useState(null);
   const [pages, setPages] = useState([]);
 
-  // 🔴 App ID ថ្មីរបស់បង
+  // 🔴 App ID: 1520516662947333
   const FACEBOOK_APP_ID = '1520516662947333';
 
   useEffect(() => {
@@ -31,47 +31,51 @@ function App() {
     window.FB.login((response) => {
       if (response.authResponse) {
         
-        // 1. ទាញយកព័ត៌មាន Profile
+        // 1. ទាញយកព័ត៌មាន Profile ម្ចាស់គណនី
         window.FB.api('/me', {fields: 'name,picture'}, (userInfo) => {
           setUserData(userInfo);
           setIsLoggedIn(true);
         });
 
-        // 2. ទាញយក Page ទាំងអស់ដែលបងមានសិទ្ធិ (Admin/Editor/etc.)
-        window.FB.api('/me/accounts', {fields: 'name,access_token,id,picture'}, (pageResponse) => {
+        // 2. ទាញយក Page ទាំងអស់ (ដាក់ Limit 100 ដើម្បីឱ្យចេញមកអស់)
+        window.FB.api('/me/accounts', {fields: 'name,access_token,id,picture', limit: 100}, (pageResponse) => {
           if (pageResponse && pageResponse.data) {
             setPages(pageResponse.data);
           }
         });
 
       } else {
-        console.log('User cancelled login or did not fully authorize.');
+        alert('ការភ្ជាប់មិនជោគជ័យ! សូមព្យាយាមម្តងទៀត។');
       }
     }, { 
-      // 🔴 នេះជា Scopes ដែលបងចង់បានមកវិញ
-      scope: 'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts' 
+      scope: 'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts',
+      auth_type: 'rerequest' // បង្ខំឱ្យវាលោតផ្ទាំងសុំសិទ្ធិឡើងវិញ បើបងធ្លាប់ Login ខុស
     });
   };
 
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif', maxWidth: '600px', margin: '0 auto', textAlign: 'center' }}>
-      <h1 style={{ color: '#1877F2' }}>PE Post Web App 🚀</h1>
+    <div style={{ padding: '15px', fontFamily: '-apple-system, sans-serif', maxWidth: '500px', margin: '0 auto' }}>
+      <header style={{ textAlign: 'center', marginBottom: '30px' }}>
+        <h1 style={{ color: '#1877F2', fontSize: '28px' }}>PE Post 🚀</h1>
+        <p style={{ color: '#666' }}>គ្រប់គ្រងការផុសបានយ៉ាងរហ័ស</p>
+      </header>
       
       {!isLoggedIn ? (
-        <div style={{ marginTop: '50px', padding: '30px', border: '1px solid #ddd', borderRadius: '15px' }}>
-          <p style={{ color: '#555', marginBottom: '20px' }}>
-            ចុចប៊ូតុងខាងក្រោមដើម្បីភ្ជាប់ជាមួយ Page របស់អ្នក
-          </p>
+        <div style={{ textAlign: 'center', padding: '40px 20px', background: '#fff', borderRadius: '20px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+          <div style={{ fontSize: '50px', marginBottom: '20px' }}>📱</div>
+          <h3>សូមភ្ជាប់ជាមួយ Facebook</h3>
+          <p style={{ color: '#888', fontSize: '14px', marginBottom: '25px' }}>ដើម្បីមើលបញ្ជីឈ្មោះ Page និងចាប់ផ្តើមការផុស</p>
           <button
             onClick={handleLogin}
             style={{
               backgroundColor: '#1877F2',
               color: 'white',
-              padding: '12px 24px',
+              padding: '15px 30px',
               border: 'none',
-              borderRadius: '8px',
+              borderRadius: '12px',
               fontSize: '16px',
               fontWeight: 'bold',
+              width: '100%',
               cursor: 'pointer'
             }}
           >
@@ -79,56 +83,59 @@ function App() {
           </button>
         </div>
       ) : (
-        <div style={{ marginTop: '20px', textAlign: 'left' }}>
-          {/* Profile Section */}
-          <div style={{ display: 'flex', alignItems: 'center', background: '#f9f9f9', padding: '15px', borderRadius: '10px' }}>
+        <div>
+          {/* User Profile Card */}
+          <div style={{ display: 'flex', alignItems: 'center', background: '#f0f2f5', padding: '15px', borderRadius: '15px', marginBottom: '25px' }}>
             <img 
               src={userData?.picture?.data?.url} 
               alt="Profile" 
-              style={{ borderRadius: '50%', width: '50px', height: '50px', marginRight: '15px' }} 
+              style={{ borderRadius: '50%', width: '50px', height: '50px', border: '2px solid #fff' }} 
             />
-            <div>
-              <h3 style={{ margin: 0 }}>{userData?.name}</h3>
-              <span style={{ color: 'green', fontSize: '12px' }}>✓ ភ្ជាប់គណនីជោគជ័យ</span>
+            <div style={{ marginLeft: '15px' }}>
+              <h4 style={{ margin: 0 }}>{userData?.name}</h4>
+              <span style={{ color: '#28a745', fontSize: '12px' }}>● កំពុងអនឡាញ</span>
             </div>
           </div>
           
-          <h3 style={{ marginTop: '25px', marginBottom: '15px' }}>ជ្រើសរើស Page ដើម្បីផុស (សរុប: {pages.length})</h3>
-          
-          {/* Pages List */}
-          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+            <h3 style={{ margin: 0 }}>Page របស់អ្នក ({pages.length})</h3>
+          </div>
+
+          {/* Pages Grid/List */}
+          <div style={{ display: 'grid', gap: '10px' }}>
             {pages.length > 0 ? (
               pages.map((page) => (
                 <div key={page.id} style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
                   padding: '12px', 
+                  background: '#fff',
                   border: '1px solid #eee', 
-                  borderRadius: '10px', 
-                  marginBottom: '10px',
-                  justifyContent: 'space-between'
+                  borderRadius: '12px',
+                  justifyContent: 'space-between',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
                 }}>
                   <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <img src={page.picture?.data?.url} style={{ width: '40px', height: '40px', borderRadius: '50%', marginRight: '10px' }} alt="" />
-                    <strong>{page.name}</strong>
+                    <img src={page.picture?.data?.url} style={{ width: '40px', height: '40px', borderRadius: '10px', marginRight: '12px' }} alt="" />
+                    <span style={{ fontWeight: '600', fontSize: '14px' }}>{page.name}</span>
                   </div>
                   <button style={{ 
-                    padding: '6px 12px', 
-                    backgroundColor: '#e7f3ff', 
-                    color: '#1877f2', 
+                    padding: '8px 15px', 
+                    backgroundColor: '#1877F2', 
+                    color: '#fff', 
                     border: 'none', 
-                    borderRadius: '5px', 
-                    cursor: 'pointer',
-                    fontWeight: 'bold'
+                    borderRadius: '8px', 
+                    fontSize: '12px',
+                    fontWeight: '600'
                   }}>
                     ជ្រើសរើស
                   </button>
                 </div>
               ))
             ) : (
-              <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>
+              <div style={{ textAlign: 'center', padding: '30px', color: '#999' }}>
                 <p>រកមិនឃើញ Page ទេ!</p>
-                <small>សូមប្រាកដថាបងបាន "Select All Pages" ពេល Login</small>
+                <button onClick={() => window.location.reload()} style={{ color: '#1877F2', background: 'none', border: 'none', textDecoration: 'underline' }}>ចុចដើម្បីសាកល្បងម្ដងទៀត</button>
               </div>
             )}
           </div>
