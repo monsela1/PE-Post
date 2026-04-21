@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 
-// --- PE Post: Master Post Inspired UI ---
 // 🔴 App ID: 1520516662947333
+const FACEBOOK_APP_ID = '1520516662947333';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState(null);
   const [pages, setPages] = useState([]);
-  const [currentPage, setCurrentPage] = useState('menu'); // Determines which screen to show
-
-  const FACEBOOK_APP_ID = '1520516662947333';
+  const [currentPage, setCurrentPage] = useState('menu');
 
   useEffect(() => {
     window.fbAsyncInit = function() {
@@ -45,233 +43,134 @@ function App() {
     }, { scope: 'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts' });
   };
 
-  // --- Common UI Components ---
-
+  // --- UI Components ---
   const Header = ({ title, showBack = false }) => (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 0', borderBottom: '1px solid #eee', marginBottom: '20px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 10px', background: '#1c1e21', color: '#fff' }}>
       {showBack ? (
-        <button onClick={() => setCurrentPage('menu')} style={{ background: 'none', border: 'none', color: '#1877F2', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>
-          &lt; Back
-        </button>
-      ) : (
-        <h1 style={{ color: '#1877F2', margin: 0, fontSize: '24px' }}>PE Post 🚀</h1>
-      )}
-      <h2 style={{ margin: 0, fontSize: '18px', color: '#333' }}>{title}</h2>
-      {isLoggedIn && userData && (
-        <img src={userData.picture?.data?.url} alt="Profile" style={{ width: '35px', height: '35px', borderRadius: '50%' }} />
-      )}
+        <div onClick={() => setCurrentPage('menu')} style={{ cursor: 'pointer', fontSize: '14px' }}>❮ Back</div>
+      ) : <div style={{ width: '40px' }}></div>}
+      <div style={{ fontWeight: 'bold' }}>{title}</div>
+      <div style={{ width: '40px' }}>
+         {isLoggedIn && <img src={userData?.picture?.data?.url} style={{ width: '30px', borderRadius: '50%' }} alt=""/>}
+      </div>
     </div>
   );
 
-  const MasterCard = ({ title, icon, color, onClick, description }) => (
-    <div 
-      onClick={onClick}
-      style={{
-        background: '#fff',
-        borderRadius: '20px',
-        padding: '25px 10px',
-        textAlign: 'center',
-        boxShadow: '0 4px 15px rgba(0,0,0,0.05)',
-        cursor: 'pointer',
-        border: '1px solid #f5f5f5',
-        transition: 'transform 0.2s',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '150px' // Make cards uniform
-      }}
-      onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
-      onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'}
-    >
-      <div style={{ fontSize: '50px', marginBottom: '10px', color: color }}>{icon}</div>
-      <div style={{ fontWeight: '700', color: '#2C3E50', fontSize: '16px' }}>{title}</div>
-      {description && <div style={{ fontSize: '12px', color: '#7F8C8D', marginTop: '5px' }}>{description}</div>}
-    </div>
-  );
-
-  const ActionButton = ({ children, onClick, color = '#1877F2' }) => (
-    <button 
-      onClick={onClick}
-      style={{
-        width: '100%',
-        padding: '15px',
-        backgroundColor: color,
-        color: '#fff',
-        border: 'none',
-        borderRadius: '12px',
-        fontSize: '16px',
-        fontWeight: 'bold',
-        cursor: 'pointer',
-        marginTop: '20px',
-        boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-      }}
-    >
-      {children}
-    </button>
-  );
-
-  const MasterInput = (props) => (
-    <input 
-      {...props}
-      style={{
-        width: '100%',
-        padding: '15px',
-        borderRadius: '10px',
-        border: '1px solid #ddd',
-        boxSizing: 'border-box',
-        fontSize: '14px',
-        marginBottom: '15px',
-        ...props.style
-      }}
-    />
-  );
-
-  // --- Individual Screen Components ---
-
+  // --- Screens ---
   const MenuScreen = () => (
-    <div>
-      <Header title="Dashboard" />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '15px', marginTop: '20px' }}>
-        <MasterCard title="Power Editor" icon="📘" color="#1877F2" onClick={() => setCurrentPage('powerEditor')} description="Manage Accounts & Posts" />
-        <MasterCard title="Post Videos" icon="🎬" color="#ff4757" onClick={() => setCurrentPage('postVideos')} description="Share Reels & Videos" />
-        <MasterCard title="Get Videos" icon="📥" color="#f1c40f" onClick={() => setCurrentPage('getVideos')} description="Download via URL" />
-        <MasterCard title="Carousel Post" icon="🖼️" color="#2ecc71" onClick={() => alert('មុខងារ Carousel កំពុងរៀបចំ...')} description="Multiple Photos Post" />
-        <MasterCard title="Split Video" icon="✂️" color="#9b59b6" onClick={() => alert('មុខងារ Split កំពុងរៀបចំ...')} description="Cut long videos" />
-        <MasterCard title="Settings" icon="⚙️" color="#7f8c8d" onClick={() => alert('Settings Section')} description="App Config" />
+    <div style={{ padding: '15px' }}>
+      <Header title="Master Post" />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginTop: '20px' }}>
+        <div onClick={() => setCurrentPage('powerEditor')} style={cardStyle}><span style={{fontSize: '40px'}}>📘</span><br/>Power Editor</div>
+        <div onClick={() => setCurrentPage('postVideos')} style={cardStyle}><span style={{fontSize: '40px'}}>🎬</span><br/>Post Videos</div>
+        <div onClick={() => setCurrentPage('getVideos')} style={cardStyle}><span style={{fontSize: '40px'}}>📥</span><br/>Get Videos</div>
+        <div style={cardStyle}><span style={{fontSize: '40px'}}>🖼️</span><br/>Carousel</div>
       </div>
     </div>
   );
 
   const PowerEditorScreen = () => {
     const [selectedPage, setSelectedPage] = useState(null);
-    const [status, setStatus] = useState('');
+    const [caption, setCaption] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [msg, setMsg] = useState('');
 
-    const testPost = () => {
-      if (!selectedPage) return alert("សូមជ្រើសរើស Page សិន!");
-      setStatus('⌛ Testing...');
-      // Simple text post for testing
+    const handlePostNow = () => {
+      if (!selectedPage) return alert("សូមជ្រើសរើសផេកសិន!");
+      if (!caption) return alert("សូមសរសេរអ្វីមួយ!");
+
+      setLoading(true);
+      setMsg('⌛ កំពុងផុស...');
+
       window.FB.api(`/${selectedPage.id}/feed`, 'POST', {
-        message: 'Hello from PE Post Power Editor!',
+        message: caption,
         access_token: selectedPage.access_token
       }, (response) => {
+        setLoading(false);
         if (response && !response.error) {
-          setStatus('✅ ផុសជោគជ័យ!');
+          setMsg('✅ ផុសជោគជ័យ!');
+          setCaption('');
         } else {
-          setStatus('❌ បរាជ័យ: ' + (response.error.message || "Unknown Error"));
+          setMsg('❌ ផុសបរាជ័យ: ' + (response.error.message || 'Error'));
         }
       });
     };
 
     return (
-      <div>
+      <div style={{ background: '#f0f2f5', minHeight: '100vh' }}>
         <Header title="Power Editor" showBack />
-        <div style={{ background: '#fff', padding: '20px', borderRadius: '15px', boxShadow: '0 2px 10px rgba(0,0,0,0.05)' }}>
-          <h4 style={{ margin: '0 0 10px 0', color: '#555' }}>ជ្រើសរើស Page ដើម្បីគ្រប់គ្រង៖</h4>
-          <select 
-            onChange={(e) => setSelectedPage(pages.find(p => p.id === e.target.value))}
-            style={{ width: '100%', padding: '12px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #ddd' }}
-          >
-            <option value="">-- Choose Page --</option>
-            {pages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-
-          {selectedPage && (
-            <div style={{ display: 'flex', alignItems: 'center', background: '#e7f3ff', padding: '10px', borderRadius: '10px', marginBottom: '15px' }}>
-              <img src={selectedPage.picture?.data?.url} style={{ width: '40px', height: '40px', borderRadius: '50%', marginRight: '10px' }} alt="" />
-              <strong>{selectedPage.name}</strong>
-            </div>
-          )}
-
-          <div style={{ padding: '30px 10px', textAlign: 'center', color: '#888', background: '#f9f9f9', borderRadius: '10px' }}>
-            [ placeholder: ផ្ទាំងគ្រប់គ្រង Account ស្រដៀង image_4.png ]
+        
+        <div style={{ padding: '15px' }}>
+          {/* Section: Select Page */}
+          <div style={sectionStyle}>
+            <div style={{color: '#888', marginBottom: '10px'}}>+ Add Account / Select Page</div>
+            <select 
+              onChange={(e) => setSelectedPage(pages.find(p => p.id === e.target.value))}
+              style={inputStyle}
+            >
+              <option value="">-- Choose Pages --</option>
+              {pages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
           </div>
 
-          <ActionButton onClick={testPost}>Test Post</ActionButton>
-          <p style={{ textAlign: 'center', marginTop: '10px', color: status.includes('✅') ? 'green' : 'red' }}>{status}</p>
+          {/* Section: Content */}
+          <div style={sectionStyle}>
+            <textarea 
+              placeholder="Write caption here..." 
+              value={caption}
+              onChange={(e) => setCaption(e.target.value)}
+              style={{ ...inputStyle, height: '120px', border: 'none', outline: 'none' }}
+            />
+          </div>
+
+          <button 
+            disabled={loading}
+            onClick={handlePostNow}
+            style={btnStyle}
+          >
+            {loading ? 'Processing...' : 'POST NOW'}
+          </button>
+          
+          <p style={{textAlign: 'center', marginTop: '10px', fontWeight: 'bold'}}>{msg}</p>
         </div>
       </div>
     );
   };
 
-  const PostVideosScreen = () => (
-    <div>
-      <Header title="Post Videos" showBack />
-      <div style={{ background: '#fff', padding: '20px', borderRadius: '15px' }}>
-        <h4 style={{ margin: '0 0 10px 0', color: '#555' }}>ជ្រើសរើស Page គោលដៅ៖</h4>
-        <select style={{ width: '100%', padding: '12px', borderRadius: '10px', marginBottom: '20px', border: '1px solid #ddd' }}>
-          <option value="">-- Choose Page --</option>
-          {pages.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-
-        <textarea placeholder="Write caption here..." style={{ width: '100%', height: '100px', padding: '12px', borderRadius: '10px', border: '1px solid #eee', boxSizing: 'border-box', marginBottom: '20px' }} />
-        
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
-          <button style={{ flex: 1, padding: '15px', background: '#f0f2f5', border: '2px dashed #ccc', borderRadius: '12px', color: '#555', cursor: 'pointer' }}>Select Video File</button>
-          <div style={{ alignSelf: 'center' }}>OR</div>
-          <button style={{ flex: 1, padding: '15px', background: '#fff', border: '1px solid #eee', borderRadius: '12px', color: '#555', cursor: 'pointer' }}>Import URL</button>
-        </div>
-
-        <div style={{ background: '#f9f9f9', padding: '20px', textAlign: 'center', borderRadius: '10px', color: '#888' }}>
-          [ placeholder: Schedule & Post (image_5.png) ]
-        </div>
-
-        <ActionButton onClick={() => alert('មុខងារផុសវីដេអូ កំពុងរៀបចំ...')} color="#ff4757">UPLOAD & POST</ActionButton>
-      </div>
-    </div>
-  );
-
-  const GetVideosScreen = () => (
-    <div>
-      <Header title="Get Videos" showBack />
-      <div style={{ background: '#fff', padding: '20px', borderRadius: '15px', textAlign: 'center' }}>
-        <div style={{ fontSize: '100px', marginBottom: '20px', color: '#f1c40f' }}>📥</div>
-        <h3 style={{ margin: '0 0 15px 0' }}>ទាញយកវីដេអូ</h3>
-        <p style={{ color: '#666', fontSize: '14px', marginBottom: '25px' }}>សូម Paste URL នៃវីដេអូដែលអ្នកចង់ទាញយកនៅខាងក្រោម</p>
-        
-        <MasterInput type="text" placeholder="Please input video URL (Facebook/Reels/etc.)" />
-        
-        <ActionButton onClick={() => alert('កំពុង Search...')} color="#34495e">SEARCH & DOWNLOAD</ActionButton>
-      </div>
-    </div>
-  );
-
-  // --- Main App Logic ---
-
   return (
-    <div style={{ 
-      padding: '10px', 
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif', 
-      maxWidth: '480px', 
-      margin: '0 auto', 
-      minHeight: '100vh', 
-      background: '#f0f2f5', // App background color
-      color: '#333'
-    }}>
+    <div style={{ maxWidth: '500px', margin: '0 auto', fontFamily: 'sans-serif' }}>
       {!isLoggedIn ? (
-        <div style={{ textAlign: 'center', paddingTop: '100px', paddingLeft: '20px', paddingRight: '20px' }}>
-          <h1 style={{ color: '#1877F2', fontSize: '36px', marginBottom: '10px' }}>PE Post🚀</h1>
-          <p style={{ color: '#666', marginBottom: '50px' }}>Your Facebook Page Companion</p>
-          
-          <div style={{ background: '#fff', padding: '40px 20px', borderRadius: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)' }}>
-            <div style={{ fontSize: '70px', marginBottom: '20px' }}>🔑</div>
-            <h2 style={{ margin: '0 0 15px 0' }}>Welcome to PE Post</h2>
-            <p style={{ color: '#888', fontSize: '14px', marginBottom: '30px' }}>Please connect your Facebook account to manage your pages, post videos, and get started.</p>
-            <ActionButton onClick={handleLogin}>Login with Facebook</ActionButton>
-          </div>
-          
-          <p style={{ color: '#aaa', fontSize: '12px', marginTop: '50px' }}>pe-post.vercel.app © 2024</p>
+        <div style={{ textAlign: 'center', marginTop: '100px', padding: '20px' }}>
+          <h1 style={{color: '#1877F2'}}>PE Post🚀</h1>
+          <button onClick={handleLogin} style={btnStyle}>Login with Facebook</button>
         </div>
       ) : (
-        <div style={{ paddingBottom: '30px' }}>
+        <>
           {currentPage === 'menu' && <MenuScreen />}
           {currentPage === 'powerEditor' && <PowerEditorScreen />}
-          {currentPage === 'postVideos' && <PostVideosScreen />}
-          {currentPage === 'getVideos' && <GetVideosScreen />}
-        </div>
+          {currentPage === 'postVideos' && <div style={{padding: '20px'}}><Header title="Post Videos" showBack />Coming Soon...</div>}
+          {currentPage === 'getVideos' && <div style={{padding: '20px'}}><Header title="Get Videos" showBack />Coming Soon...</div>}
+        </>
       )}
     </div>
   );
 }
+
+// --- Styles ---
+const cardStyle = {
+  background: '#fff', padding: '20px', borderRadius: '15px', textAlign: 'center',
+  boxShadow: '0 2px 10px rgba(0,0,0,0.05)', cursor: 'pointer', fontWeight: 'bold', color: '#444'
+};
+const sectionStyle = {
+  background: '#fff', padding: '15px', borderRadius: '10px', marginBottom: '15px',
+  boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+};
+const inputStyle = {
+  width: '100%', padding: '10px', borderRadius: '5px', border: '1px solid #ddd', boxSizing: 'border-box'
+};
+const btnStyle = {
+  width: '100%', padding: '15px', background: '#2c3e50', color: '#fff', border: 'none',
+  borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer'
+};
 
 export default App;
