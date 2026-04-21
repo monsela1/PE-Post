@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// App ID របស់បង
+// 🔴 App ID របស់បង
 const FACEBOOK_APP_ID = '1520516662947333';
 
 function App() {
@@ -132,7 +132,7 @@ function App() {
       ) : (
         <div style={{ padding: '20px' }}>
           
-          {/* Card-based Page Selector ទំនើប */}
+          {/* Card-based Page Selector */}
           <div style={{ marginBottom: '15px' }}>
             <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: 'bold' }}>ជ្រើសរើស Page៖</div>
             <div style={{ display: 'flex', overflowX: 'auto', gap: '12px', paddingBottom: '10px', WebkitOverflowScrolling: 'touch' }}>
