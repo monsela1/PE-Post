@@ -1,96 +1,236 @@
-import React, { useState } from 'react';
-import { Upload, FileVideo, Send, Key, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 
-export default function VideoPowerEditor() {
-  const [token, setToken] = useState('');
-  const [caption, setCaption] = useState('');
+// --- Styles ទំនើប (រក្សាទុកដដែល) ---
+const cardStyle = { background: '#fff', padding: '25px 10px', borderRadius: '16px', textAlign: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', cursor: 'pointer', fontWeight: 'bold', color: '#333', border: '1px solid #f4f4f4' };
+const addAccountBoxStyle = { background: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '15px', border: '1px solid #e0e0e0', textAlign: 'center', cursor: 'pointer', color: '#666', fontWeight: 'bold' };
+const selectBtnStyle = { display: 'inline-block', padding: '12px 30px', border: '2px solid #224078', color: '#224078', borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: 'all 0.2s' };
+const urlInputStyle = { width: '100%', padding: '16px', borderRadius: '10px', border: '1px solid #e0e0e0', boxSizing: 'border-box', outline: 'none', background: '#fcfcfc', fontSize: '14px' };
+const uploadBtnStyle = { width: '100%', padding: '18px', background: '#224078', color: '#7EEDB2', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(34, 64, 120, 0.3)' };
+const previewCardStyle = { minWidth: '220px', maxWidth: '250px', background: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #eee', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', flex: '0 0 auto' };
+
+// 🔴 ចំណុចទី១៖ កុំភ្លេចប្តូរ App ID បើបងប្រើ App ផ្សេង
+const FACEBOOK_APP_ID = '1520516662947333';
+
+// 🔴 ចំណុចទី២៖ កន្លែងដាក់ Link របស់ Pella.app 
+// (ពេលរកឃើញ IP:Port នៅលើ Pella ហើយ សូមយកមកដូរត្រង់នេះ ឧទាហរណ៍៖ http://104.23.45.67:10203/api/extract)
+const BACKEND_API_URL = 'http://localhost:5000/api/extract'; 
+
+function App() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userData, setUserData] = useState(null);
+  const [pages, setPages] = useState([]);
+  const [currentPage, setCurrentPage] = useState('menu');
+  
+  const [powerStep, setPowerStep] = useState(1);
+  const [videoLink, setVideoLink] = useState('');
+  const [videoPreview, setVideoPreview] = useState(null); 
   const [selectedPage, setSelectedPage] = useState(null);
+  const [caption, setCaption] = useState('');
+  
+  const [status, setStatus] = useState('');
 
-  // ទិន្នន័យ Page ឧទាហរណ៍ (ពេលភ្ជាប់ API ពិតប្រាកដ យើងនឹងទាញយកពី Facebook)
-  const mockPages = [
-    { id: '101', name: 'MSL Tools Official', likes: '15K' },
-    { id: '102', name: 'MSL FARM Store', likes: '8K' },
-    { id: '103', name: 'Tech Automation', likes: '22K' },
-  ];
+  useEffect(() => {
+    window.fbAsyncInit = function() {
+      window.FB.init({ appId: FACEBOOK_APP_ID, cookie: true, xfbml: true, version: 'v19.0' });
+      window.FB.getLoginStatus((response) => {
+        if (response.status === 'connected') fetchUserInfo();
+      });
+    };
+    (function(d, s, id) {
+      var js, fjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      fjs.parentNode.insertBefore(js, fjs);
+    }(document, 'script', 'facebook-jssdk'));
+  }, []);
+
+  const fetchUserInfo = () => {
+    window.FB.api('/me', {fields: 'name,picture'}, (u) => { setUserData(u); setIsLoggedIn(true); });
+    window.FB.api('/me/accounts', {fields: 'name,access_token,id,picture', limit: 100}, (p) => { 
+      const pagesData = p.data || [];
+      setPages(pagesData); 
+      if(pagesData.length > 0) setSelectedPage(pagesData[0]); 
+    });
+  };
+
+  const handleLogin = () => {
+    window.FB.login((response) => {
+      if (response.authResponse) fetchUserInfo();
+    }, { scope: 'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts' });
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setVideoPreview(url);
+      setVideoLink('');
+    }
+  };
+
+  const goToPostStep = () => {
+    if (!videoLink && !videoPreview) return alert("សូមដាក់ Link វីដេអូ ឬរើស File ជាមុនសិន!");
+    setPowerStep(2);
+    setStatus(''); 
+  };
+
+  // 🔴 មុខងារបញ្ជូន Link ទៅកាន់ Python រួចបន្តទៅកាន់ Facebook
+  const handlePostNow = async () => {
+    if (!selectedPage) return alert("សូមជ្រើសរើស Page សិន!");
+    if (!videoLink) return alert("សូមបញ្ចូល Link វីដេអូ (FB, YT, TikTok) ជាមុនសិន!");
+    
+    setStatus('⌛ កំពុងបំប្លែង Link វីដេអូពី Python Backend...');
+
+    try {
+      // ១. បាញ់ Link ទៅឱ្យម៉ាស៊ីន Python របស់យើង
+      const pyResponse = await fetch(BACKEND_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: videoLink })
+      });
+      
+      const pyData = await pyResponse.json();
+      
+      if (!pyData.direct_url) {
+        setStatus('❌ បរាជ័យ: ' + (pyData.error || 'មិនអាចទាញយក Direct Link បានទេ'));
+        return;
+      }
+
+      setStatus('⌛ បំប្លែងជោគជ័យ! កំពុងបញ្ជាឱ្យ Facebook ទាញយកមកផុស...');
+
+      // ២. បញ្ជូន Direct Link ដែល Python ឱ្យមក ទៅកាន់ Facebook
+      window.FB.api(
+        `/${selectedPage.id}/videos`,
+        'POST',
+        {
+          description: caption || pyData.title, 
+          file_url: pyData.direct_url, 
+          access_token: selectedPage.access_token
+        },
+        (response) => {
+          if (response && !response.error) {
+            setStatus('✅ ផុសជោគជ័យ! សូមចូលទៅឆែកមើលក្នុង Page។');
+            setCaption('');
+            setVideoLink('');
+          } else {
+            console.error(response.error);
+            setStatus('❌ Facebook Error: ' + (response.error.message || 'Unknown Error'));
+          }
+        }
+      );
+
+    } catch (error) {
+      console.error(error);
+      setStatus('❌ បរាជ័យ: មិនអាចភ្ជាប់ទៅកាន់ Python Backend បានទេ! សូមឆែកមើល Link របស់ Pella ឡើងវិញ។');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white p-4 md:p-8 font-sans flex justify-center items-start">
-      {/* Main Glassmorphism Container */}
-      <div className="w-full max-w-4xl bg-[#1e293b]/60 backdrop-blur-xl border border-[#224078] rounded-2xl p-6 md:p-8 shadow-[0_0_20px_rgba(34,64,120,0.4)]">
-        
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8 border-b border-[#224078]/50 pb-4">
-          <FileVideo className="w-8 h-8 text-[#7EEDB2]" />
-          <h1 className="text-2xl md:text-3xl font-bold text-[#7EEDB2] tracking-wider">VIDEO POWER EDITOR</h1>
+    <div style={{ maxWidth: '480px', margin: '0 auto', fontFamily: 'sans-serif', background: '#fff', minHeight: '100vh' }}>
+      
+      {/* MENU SCREEN */}
+      {currentPage === 'menu' && (
+        <div style={{ padding: '15px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h1 style={{ color: '#224078', fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Master <span style={{fontStyle: 'italic', fontWeight: 'normal'}}>Post</span></h1>
+            <div style={{ display: 'flex', gap: '15px', fontSize: '20px' }}><span>☕</span><span>🌐</span></div>
+          </div>
+          <div style={{ background: '#7EEDB2', padding: '15px', borderRadius: '12px', color: '#1a3059', marginBottom: '20px', textAlign: 'center', boxShadow: '0 4px 10px rgba(126, 237, 178, 0.3)' }}>
+            <strong style={{ fontSize: '16px' }}>Soundy AI: Noise Remover</strong><br/><span style={{ fontSize: '13px' }}>លុបសំឡេងរំខានចេញភ្លាមៗ!</span>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+            <div onClick={() => { setCurrentPage('powerEditor'); setPowerStep(1); }} style={cardStyle}><span style={{fontSize: '38px'}}>📘</span><br/><span style={{marginTop: '8px', display: 'block'}}>Power Editor</span></div>
+            <div style={cardStyle}><span style={{fontSize: '38px'}}>🎬</span><br/><span style={{marginTop: '8px', display: 'block'}}>Post Videos</span></div>
+            <div style={cardStyle}><span style={{fontSize: '38px'}}>📊</span><br/><span style={{marginTop: '8px', display: 'block'}}>Soundy AI</span></div>
+            <div style={cardStyle}><span style={{fontSize: '38px'}}>📥</span><br/><span style={{marginTop: '8px', display: 'block'}}>Get Videos</span></div>
+            <div style={cardStyle}><span style={{fontSize: '38px'}}>🖼️</span><br/><span style={{marginTop: '8px', display: 'block'}}>Photo Carousel</span></div>
+            <div style={cardStyle}><span style={{fontSize: '38px'}}>✂️</span><br/><span style={{marginTop: '8px', display: 'block'}}>Split Video</span></div>
+          </div>
         </div>
+      )}
 
-        {/* Token Input Section */}
-        <div className="mb-8">
-          <label className="block text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
-            <Key className="w-4 h-4" /> Facebook Access Token
-          </label>
-          <input
-            type="text"
-            placeholder="បញ្ចូល EAAG Token នៅទីនេះ..."
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            className="w-full bg-[#0f172a] border border-[#224078] rounded-lg p-4 text-white focus:outline-none focus:border-[#7EEDB2] transition-colors"
-          />
-        </div>
+      {/* POWER EDITOR SCREEN */}
+      {currentPage === 'powerEditor' && (
+        <div style={{ background: '#f8f9fa', minHeight: '100vh', paddingBottom: '30px' }}>
+          <div style={{ background: '#224078', color: '#fff', padding: '15px 20px', display: 'flex', alignItems: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+            <div onClick={() => powerStep === 1 ? setCurrentPage('menu') : setPowerStep(1)} style={{ cursor: 'pointer', marginRight: '20px', fontSize: '16px' }}>❮ Back</div>
+            <div style={{ fontWeight: 'bold', fontSize: '18px' }}>{powerStep === 1 ? 'Power Editor' : 'Video Information'}</div>
+          </div>
 
-        {/* Page Selection (Card-based Layout) */}
-        <div className="mb-8">
-          <label className="block text-sm font-medium text-gray-300 mb-3">ជ្រើសរើស Page</label>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {mockPages.map((page) => (
-              <div
-                key={page.id}
-                onClick={() => setSelectedPage(page.id)}
-                className={`cursor-pointer p-4 rounded-xl border transition-all duration-300 ${
-                  selectedPage === page.id
-                    ? 'border-[#7EEDB2] bg-[#224078]/40 shadow-[0_0_10px_rgba(126,237,178,0.2)]'
-                    : 'border-[#224078] bg-[#0f172a]/50 hover:border-[#7EEDB2]/50'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-semibold text-white">{page.name}</h3>
-                    <p className="text-xs text-gray-400 mt-1">Likes: {page.likes}</p>
+          {powerStep === 1 && (
+            <div style={{ padding: '20px' }}>
+              <div style={addAccountBoxStyle} onClick={handleLogin}>
+                {isLoggedIn ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                    <img src={userData?.picture?.data?.url} style={{ width: '30px', borderRadius: '50%' }} alt="" />
+                    <span style={{ color: '#224078', fontWeight: 'bold' }}>{userData?.name}</span>
                   </div>
-                  {selectedPage === page.id && <CheckCircle2 className="w-5 h-5 text-[#7EEDB2]" />}
+                ) : '+ Add Account'}
+              </div>
+              <div style={{ background: '#fff', padding: '30px 20px', borderRadius: '15px', marginBottom: '20px', border: '1px solid #eee', textAlign: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
+                <input type="file" id="vPicker" accept="video/*" style={{ display: 'none' }} onChange={handleFileChange} />
+                <label htmlFor="vPicker" style={selectBtnStyle}>{videoPreview ? 'Change Video File' : 'Select Video File'}</label>
+                <div style={{ margin: '20px 0', color: '#aaa', fontWeight: 'bold', fontSize: '14px' }}>OR</div>
+                <input type="text" placeholder="PLEASE INPUT VIDEO URL (FB/YT/TikTok)" style={urlInputStyle} value={videoLink} onChange={(e) => { setVideoLink(e.target.value); setVideoPreview(null); }} />
+              </div>
+              <button style={uploadBtnStyle} onClick={goToPostStep}>UPLOAD VIDEO</button>
+            </div>
+          )}
+
+          {powerStep === 2 && (
+            <div style={{ padding: '20px' }}>
+              {/* Card-based Page Selector */}
+              <div style={{ marginBottom: '15px' }}>
+                <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: 'bold' }}>ជ្រើសរើស Page៖</div>
+                <div style={{ display: 'flex', overflowX: 'auto', gap: '12px', paddingBottom: '10px' }}>
+                  {pages.map(p => (
+                    <div 
+                      key={p.id} 
+                      onClick={() => setSelectedPage(p)}
+                      style={{ 
+                        minWidth: '80px', padding: '12px 8px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center',
+                        border: `2px solid ${selectedPage?.id === p.id ? '#7EEDB2' : '#eee'}`, 
+                        background: selectedPage?.id === p.id ? '#224078' : '#fff', color: selectedPage?.id === p.id ? '#fff' : '#444'
+                      }}
+                    >
+                      <img src={p.picture?.data?.url} style={{ width: '40px', height: '40px', borderRadius: '50%', marginBottom: '5px', border: selectedPage?.id === p.id ? '2px solid #7EEDB2' : 'none' }} alt="" />
+                      <div style={{ fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '70px', margin: '0 auto' }}>{p.name}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
+
+              <textarea placeholder="Write caption here..." style={{ width: '100%', height: '90px', border: '1px solid #eee', borderRadius: '12px', padding: '15px', outline: 'none', background: '#fff', fontSize: '14px', boxSizing: 'border-box', marginBottom: '20px', resize: 'none' }} value={caption} onChange={(e) => setCaption(e.target.value)} />
+              
+              <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', marginBottom: '25px', paddingBottom: '5px' }}>
+                <div style={previewCardStyle}>
+                  <div style={{ height: '220px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    {videoPreview ? <video src={videoPreview} style={{width: '100%', height: '100%', objectFit: 'cover'}} controls /> : <div style={{color: '#fff', textAlign: 'center', padding: '20px'}}><span style={{fontSize: '30px', display: 'block', marginBottom: '10px'}}>🔗</span>{videoLink ? "Link Ready" : "No Video"}</div>}
+                  </div>
+                  <div style={{ padding: '12px', fontSize: '12px', display: 'flex', justifyContent: 'space-between', background: '#fff', fontWeight: 'bold' }}>
+                    <span>ចុច Like Page ដើម្បីបានវីដេអូថ្មីៗ</span> <span style={{color: '#224078', fontSize: '14px'}}>👍</span>
+                  </div>
+                </div>
+
+                <div style={previewCardStyle}>
+                  <div style={{ height: '220px', background: '#eef2f9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                    {selectedPage ? <><img src={selectedPage?.picture?.data?.url} style={{width: '70px', height: '70px', borderRadius: '50%', marginBottom: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)'}} alt="" /><div style={{fontWeight: 'bold', color: '#224078', fontSize: '14px'}}>{selectedPage.name}</div></> : <div style={{color: '#888'}}>PREVIEW</div>}
+                  </div>
+                  <div style={{ padding: '12px', fontSize: '12px', background: '#fff', color: '#666', borderTop: '1px solid #eee' }}>{selectedPage ? selectedPage.name : "Page Name"}</div>
+                </div>
+              </div>
+
+              {/* 🔴 ប៊ូតុង និងស្ថានភាពផុស */}
+              <button style={uploadBtnStyle} onClick={handlePostNow}>POST NOW</button>
+              {status && <div style={{textAlign: 'center', marginTop: '15px', fontWeight: 'bold', fontSize: '14px', color: status.includes('✅') ? '#28a745' : '#dc3545', padding: '10px'}}>{status}</div>}
+            </div>
+          )}
+
         </div>
-
-        {/* Upload Video & Caption Section */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {/* Video Upload Area */}
-          <div className="border-2 border-dashed border-[#224078] hover:border-[#7EEDB2] bg-[#0f172a]/30 rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors h-64">
-            <Upload className="w-12 h-12 text-[#224078] mb-4" />
-            <p className="text-gray-300 font-medium">ចុច ឬអូសវីដេអូទម្លាក់ទីនេះ</p>
-            <p className="text-xs text-gray-500 mt-2">Support MP4, MOV (Max 1GB)</p>
-          </div>
-
-          {/* Caption Area */}
-          <div className="flex flex-col h-64">
-            <textarea
-              placeholder="សរសេរ Caption សម្រាប់វីដេអូរបស់បងនៅទីនេះ..."
-              value={caption}
-              onChange={(e) => setCaption(e.target.value)}
-              className="w-full h-full bg-[#0f172a] border border-[#224078] rounded-xl p-4 text-white focus:outline-none focus:border-[#7EEDB2] resize-none transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* POST Button */}
-        <button className="w-full bg-[#224078] hover:bg-[#224078]/80 border border-[#7EEDB2]/50 text-[#7EEDB2] font-bold text-lg py-4 rounded-xl flex items-center justify-center gap-2 transition-all duration-300 hover:shadow-[0_0_15px_rgba(126,237,178,0.3)]">
-          <Send className="w-6 h-6" />
-          POST VIDEO NOW
-        </button>
-
-      </div>
+      )}
     </div>
   );
 }
+
+export default App;
