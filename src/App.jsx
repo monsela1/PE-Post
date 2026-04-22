@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// --- Styles ទំនើប ---
+// --- Styles ទំនើប (រក្សាទុកដដែល) ---
 const cardStyle = { background: '#fff', padding: '25px 10px', borderRadius: '16px', textAlign: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', cursor: 'pointer', fontWeight: 'bold', color: '#333', border: '1px solid #f4f4f4' };
 const addAccountBoxStyle = { background: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '15px', border: '1px solid #e0e0e0', textAlign: 'center', cursor: 'pointer', color: '#666', fontWeight: 'bold' };
 const selectBtnStyle = { display: 'inline-block', padding: '12px 30px', border: '2px solid #224078', color: '#224078', borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: 'all 0.2s' };
@@ -8,11 +8,8 @@ const urlInputStyle = { width: '100%', padding: '16px', borderRadius: '10px', bo
 const uploadBtnStyle = { width: '100%', padding: '18px', background: '#224078', color: '#7EEDB2', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(34, 64, 120, 0.3)' };
 const previewCardStyle = { minWidth: '220px', maxWidth: '250px', background: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #eee', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', flex: '0 0 auto' };
 
-// 🔴 ចំណុចទី១៖ កុំភ្លេចប្តូរ App ID របស់បង
+// 🔴 App ID របស់បង (រក្សាដើម)
 const FACEBOOK_APP_ID = '1520516662947333';
-
-// 🔴 ចំណុចទី២៖ កន្លែងដាក់ Link របស់ Pella.app 
-const BACKEND_API_URL = 'http://localhost:5000/api/extract'; 
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -26,8 +23,10 @@ function App() {
   const [selectedPage, setSelectedPage] = useState(null);
   const [caption, setCaption] = useState('');
   
+  // 🔴 State សម្រាប់បង្ហាញស្ថានភាពពេលកំពុងផុស
   const [status, setStatus] = useState('');
 
+  // រក្សា Logic ដើមទាំងអស់
   useEffect(() => {
     window.fbAsyncInit = function() {
       window.FB.init({ appId: FACEBOOK_APP_ID, cookie: true, xfbml: true, version: 'v19.0' });
@@ -71,55 +70,50 @@ function App() {
   const goToPostStep = () => {
     if (!videoLink && !videoPreview) return alert("សូមដាក់ Link វីដេអូ ឬរើស File ជាមុនសិន!");
     setPowerStep(2);
-    setStatus(''); 
+    setStatus(''); // Clear status ពេលចូលផ្ទាំងថ្មី
   };
 
-  const handlePostNow = async () => {
+  // 🔴 មុខងារថ្មី៖ បញ្ជូនទិន្នន័យផុសទៅកាន់ Facebook ពិតប្រាកដ
+  const handlePostNow = () => {
     if (!selectedPage) return alert("សូមជ្រើសរើស Page សិន!");
-    if (!videoLink) return alert("សូមបញ្ចូល Link វីដេអូ (FB, YT, TikTok) ជាមុនសិន!");
     
-    setStatus('⌛ កំពុងបំប្លែង Link វីដេអូពី Python Backend...');
-
-    try {
-      const pyResponse = await fetch(BACKEND_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: videoLink })
-      });
-      
-      const pyData = await pyResponse.json();
-      
-      if (!pyData.direct_url) {
-        setStatus('❌ បរាជ័យ: ' + (pyData.error || 'មិនអាចទាញយក Direct Link បានទេ'));
-        return;
+    setStatus('⌛ កំពុងដំណើរការផុស...');
+    
+    const targetUrl = videoLink || 'https://facebook.com'; // កំណត់ Link ដែលចង់ឱ្យគេចុច
+    
+    // រៀបចំ Card ទាំង២ (ប្រើ Placeholder សម្រាប់ធ្វើតេស្តសិន)
+    const attachments = [
+      {
+        link: targetUrl,
+        name: caption || 'ចុចមើលវីដេអូ',
+        picture: 'https://placehold.co/600x400/000000/FFFFFF/png?text=Video+Thumbnail', 
+      },
+      {
+        link: `https://facebook.com/${selectedPage.id}`,
+        name: 'ចុច Like Page ដើម្បីបានវីដេអូថ្មីៗ',
+        picture: 'https://placehold.co/600x400/d1e7ff/224078/png?text=Like+Page', 
       }
+    ];
 
-      setStatus('⌛ បំប្លែងជោគជ័យ! កំពុងបញ្ជាឱ្យ Facebook ទាញយកមកផុស...');
-
-      window.FB.api(
-        `/${selectedPage.id}/videos`,
-        'POST',
-        {
-          description: caption || pyData.title, 
-          file_url: pyData.direct_url, 
-          access_token: selectedPage.access_token
-        },
-        (response) => {
-          if (response && !response.error) {
-            setStatus('✅ ផុសជោគជ័យ! សូមចូលទៅឆែកមើលក្នុង Page។');
-            setCaption('');
-            setVideoLink('');
-          } else {
-            console.error(response.error);
-            setStatus('❌ Facebook Error: ' + (response.error.message || 'Unknown Error'));
-          }
+    window.FB.api(
+      `/${selectedPage.id}/feed`,
+      'POST',
+      {
+        message: caption,
+        link: targetUrl,
+        child_attachments: JSON.stringify(attachments),
+        access_token: selectedPage.access_token
+      },
+      (response) => {
+        if (response && !response.error) {
+          setStatus('✅ ផុសជោគជ័យ! សូមចូលទៅឆែកមើលក្នុង Page។');
+          setCaption('');
+        } else {
+          console.error(response.error);
+          setStatus('❌ បរាជ័យ: ' + (response.error.message || 'Unknown Error'));
         }
-      );
-
-    } catch (error) {
-      console.error(error);
-      setStatus('❌ បរាជ័យ: មិនអាចភ្ជាប់ទៅកាន់ Python Backend បានទេ! សូមឆែកមើល Link របស់ Pella ឡើងវិញ។');
-    }
+      }
+    );
   };
 
   return (
@@ -168,7 +162,7 @@ function App() {
                 <input type="file" id="vPicker" accept="video/*" style={{ display: 'none' }} onChange={handleFileChange} />
                 <label htmlFor="vPicker" style={selectBtnStyle}>{videoPreview ? 'Change Video File' : 'Select Video File'}</label>
                 <div style={{ margin: '20px 0', color: '#aaa', fontWeight: 'bold', fontSize: '14px' }}>OR</div>
-                <input type="text" placeholder="PLEASE INPUT VIDEO URL (FB/YT/TikTok)" style={urlInputStyle} value={videoLink} onChange={(e) => { setVideoLink(e.target.value); setVideoPreview(null); }} />
+                <input type="text" placeholder="PLEASE INPUT VIDEO URL" style={urlInputStyle} value={videoLink} onChange={(e) => { setVideoLink(e.target.value); setVideoPreview(null); }} />
               </div>
               <button style={uploadBtnStyle} onClick={goToPostStep}>UPLOAD VIDEO</button>
             </div>
@@ -176,6 +170,7 @@ function App() {
 
           {powerStep === 2 && (
             <div style={{ padding: '20px' }}>
+              {/* Card-based Page Selector */}
               <div style={{ marginBottom: '15px' }}>
                 <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: 'bold' }}>ជ្រើសរើស Page៖</div>
                 <div style={{ display: 'flex', overflowX: 'auto', gap: '12px', paddingBottom: '10px' }}>
@@ -216,8 +211,9 @@ function App() {
                 </div>
               </div>
 
+              {/* 🔴 ប៊ូតុង និងស្ថានភាពផុស */}
               <button style={uploadBtnStyle} onClick={handlePostNow}>POST NOW</button>
-              {status && <div style={{textAlign: 'center', marginTop: '15px', fontWeight: 'bold', fontSize: '14px', color: status.includes('✅') ? '#28a745' : '#dc3545', padding: '10px'}}>{status}</div>}
+              {status && <div style={{textAlign: 'center', marginTop: '15px', fontWeight: 'bold', fontSize: '14px', color: status.includes('✅') ? '#28a745' : '#dc3545'}}>{status}</div>}
             </div>
           )}
 
