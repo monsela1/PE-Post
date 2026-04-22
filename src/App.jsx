@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// --- Styles ទំនើប (រក្សាទុកដដែល) ---
+// --- Styles ទំនើប ---
 const cardStyle = { background: '#fff', padding: '25px 10px', borderRadius: '16px', textAlign: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', cursor: 'pointer', fontWeight: 'bold', color: '#333', border: '1px solid #f4f4f4' };
 const addAccountBoxStyle = { background: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '15px', border: '1px solid #e0e0e0', textAlign: 'center', cursor: 'pointer', color: '#666', fontWeight: 'bold' };
 const selectBtnStyle = { display: 'inline-block', padding: '12px 30px', border: '2px solid #224078', color: '#224078', borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: 'all 0.2s' };
@@ -8,11 +8,10 @@ const urlInputStyle = { width: '100%', padding: '16px', borderRadius: '10px', bo
 const uploadBtnStyle = { width: '100%', padding: '18px', background: '#224078', color: '#7EEDB2', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(34, 64, 120, 0.3)' };
 const previewCardStyle = { minWidth: '220px', maxWidth: '250px', background: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #eee', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', flex: '0 0 auto' };
 
-// 🔴 ចំណុចទី១៖ កុំភ្លេចប្តូរ App ID បើបងប្រើ App ផ្សេង
+// 🔴 ចំណុចទី១៖ កុំភ្លេចប្តូរ App ID របស់បង
 const FACEBOOK_APP_ID = '1520516662947333';
 
 // 🔴 ចំណុចទី២៖ កន្លែងដាក់ Link របស់ Pella.app 
-// (ពេលរកឃើញ IP:Port នៅលើ Pella ហើយ សូមយកមកដូរត្រង់នេះ ឧទាហរណ៍៖ http://104.23.45.67:10203/api/extract)
 const BACKEND_API_URL = 'http://localhost:5000/api/extract'; 
 
 function App() {
@@ -75,7 +74,6 @@ function App() {
     setStatus(''); 
   };
 
-  // 🔴 មុខងារបញ្ជូន Link ទៅកាន់ Python រួចបន្តទៅកាន់ Facebook
   const handlePostNow = async () => {
     if (!selectedPage) return alert("សូមជ្រើសរើស Page សិន!");
     if (!videoLink) return alert("សូមបញ្ចូល Link វីដេអូ (FB, YT, TikTok) ជាមុនសិន!");
@@ -83,7 +81,6 @@ function App() {
     setStatus('⌛ កំពុងបំប្លែង Link វីដេអូពី Python Backend...');
 
     try {
-      // ១. បាញ់ Link ទៅឱ្យម៉ាស៊ីន Python របស់យើង
       const pyResponse = await fetch(BACKEND_API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -99,7 +96,6 @@ function App() {
 
       setStatus('⌛ បំប្លែងជោគជ័យ! កំពុងបញ្ជាឱ្យ Facebook ទាញយកមកផុស...');
 
-      // ២. បញ្ជូន Direct Link ដែល Python ឱ្យមក ទៅកាន់ Facebook
       window.FB.api(
         `/${selectedPage.id}/videos`,
         'POST',
@@ -180,7 +176,6 @@ function App() {
 
           {powerStep === 2 && (
             <div style={{ padding: '20px' }}>
-              {/* Card-based Page Selector */}
               <div style={{ marginBottom: '15px' }}>
                 <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: 'bold' }}>ជ្រើសរើស Page៖</div>
                 <div style={{ display: 'flex', overflowX: 'auto', gap: '12px', paddingBottom: '10px' }}>
@@ -221,7 +216,6 @@ function App() {
                 </div>
               </div>
 
-              {/* 🔴 ប៊ូតុង និងស្ថានភាពផុស */}
               <button style={uploadBtnStyle} onClick={handlePostNow}>POST NOW</button>
               {status && <div style={{textAlign: 'center', marginTop: '15px', fontWeight: 'bold', fontSize: '14px', color: status.includes('✅') ? '#28a745' : '#dc3545', padding: '10px'}}>{status}</div>}
             </div>
