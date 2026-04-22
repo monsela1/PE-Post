@@ -1,32 +1,14 @@
 import React, { useState, useEffect } from 'react';
 
-// --- Styles (រៀបចំនៅខាងក្រៅដើម្បីការពារការគាំង) ---
-const cardStyle = { 
-  background: '#fff', padding: '25px 10px', borderRadius: '16px', textAlign: 'center', 
-  boxShadow: '0 2px 12px rgba(0,0,0,0.04)', cursor: 'pointer', fontWeight: 'bold', color: '#333', border: '1px solid #f4f4f4' 
-};
-const addAccountBoxStyle = { 
-  background: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '15px', 
-  border: '1px solid #e0e0e0', textAlign: 'center', cursor: 'pointer', color: '#666', fontWeight: 'bold' 
-};
-const selectBtnStyle = { 
-  display: 'inline-block', padding: '12px 30px', border: '2px solid #224078', color: '#224078', 
-  borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: 'all 0.2s' 
-};
-const urlInputStyle = { 
-  width: '100%', padding: '16px', borderRadius: '10px', border: '1px solid #e0e0e0', 
-  boxSizing: 'border-box', outline: 'none', background: '#fcfcfc', fontSize: '14px' 
-};
-const uploadBtnStyle = { 
-  width: '100%', padding: '18px', background: '#224078', color: '#7EEDB2', border: 'none', 
-  borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(34, 64, 120, 0.3)' 
-};
-const previewCardStyle = { 
-  minWidth: '220px', maxWidth: '250px', background: '#fff', borderRadius: '12px', overflow: 'hidden', 
-  border: '1px solid #eee', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', flex: '0 0 auto' 
-};
+// --- Styles ទំនើប (រក្សាទុកដដែល) ---
+const cardStyle = { background: '#fff', padding: '25px 10px', borderRadius: '16px', textAlign: 'center', boxShadow: '0 2px 12px rgba(0,0,0,0.04)', cursor: 'pointer', fontWeight: 'bold', color: '#333', border: '1px solid #f4f4f4' };
+const addAccountBoxStyle = { background: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '15px', border: '1px solid #e0e0e0', textAlign: 'center', cursor: 'pointer', color: '#666', fontWeight: 'bold' };
+const selectBtnStyle = { display: 'inline-block', padding: '12px 30px', border: '2px solid #224078', color: '#224078', borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: 'all 0.2s' };
+const urlInputStyle = { width: '100%', padding: '16px', borderRadius: '10px', border: '1px solid #e0e0e0', boxSizing: 'border-box', outline: 'none', background: '#fcfcfc', fontSize: '14px' };
+const uploadBtnStyle = { width: '100%', padding: '18px', background: '#224078', color: '#7EEDB2', border: 'none', borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(34, 64, 120, 0.3)' };
+const previewCardStyle = { minWidth: '220px', maxWidth: '250px', background: '#fff', borderRadius: '12px', overflow: 'hidden', border: '1px solid #eee', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', flex: '0 0 auto' };
 
-// 🔴 App ID
+// 🔴 App ID របស់បង (រក្សាដើម)
 const FACEBOOK_APP_ID = '1520516662947333';
 
 function App() {
@@ -40,17 +22,18 @@ function App() {
   const [videoPreview, setVideoPreview] = useState(null); 
   const [selectedPage, setSelectedPage] = useState(null);
   const [caption, setCaption] = useState('');
+  
+  // 🔴 State សម្រាប់បង្ហាញស្ថានភាពពេលកំពុងផុស
+  const [status, setStatus] = useState('');
 
+  // រក្សា Logic ដើមទាំងអស់
   useEffect(() => {
     window.fbAsyncInit = function() {
       window.FB.init({ appId: FACEBOOK_APP_ID, cookie: true, xfbml: true, version: 'v19.0' });
       window.FB.getLoginStatus((response) => {
-        if (response.status === 'connected') {
-          fetchUserInfo();
-        }
+        if (response.status === 'connected') fetchUserInfo();
       });
     };
-
     (function(d, s, id) {
       var js, fjs = d.getElementsByTagName(s)[0];
       if (d.getElementById(id)) return;
@@ -61,24 +44,17 @@ function App() {
   }, []);
 
   const fetchUserInfo = () => {
-    window.FB.api('/me', {fields: 'name,picture'}, (u) => { 
-      setUserData(u); 
-      setIsLoggedIn(true); 
-    });
+    window.FB.api('/me', {fields: 'name,picture'}, (u) => { setUserData(u); setIsLoggedIn(true); });
     window.FB.api('/me/accounts', {fields: 'name,access_token,id,picture', limit: 100}, (p) => { 
       const pagesData = p.data || [];
       setPages(pagesData); 
-      if(pagesData.length > 0) {
-        setSelectedPage(pagesData[0]); 
-      }
+      if(pagesData.length > 0) setSelectedPage(pagesData[0]); 
     });
   };
 
   const handleLogin = () => {
     window.FB.login((response) => {
-      if (response.authResponse) {
-        fetchUserInfo();
-      }
+      if (response.authResponse) fetchUserInfo();
     }, { scope: 'public_profile,pages_show_list,pages_read_engagement,pages_manage_posts' });
   };
 
@@ -92,32 +68,69 @@ function App() {
   };
 
   const goToPostStep = () => {
-    if (!videoLink && !videoPreview) {
-      return alert("សូមដាក់ Link វីដេអូ ឬរើស File វីដេអូជាមុនសិន!");
-    }
+    if (!videoLink && !videoPreview) return alert("សូមដាក់ Link វីដេអូ ឬរើស File ជាមុនសិន!");
     setPowerStep(2);
+    setStatus(''); // Clear status ពេលចូលផ្ទាំងថ្មី
+  };
+
+  // 🔴 មុខងារថ្មី៖ បញ្ជូនទិន្នន័យផុសទៅកាន់ Facebook ពិតប្រាកដ
+  const handlePostNow = () => {
+    if (!selectedPage) return alert("សូមជ្រើសរើស Page សិន!");
+    
+    setStatus('⌛ កំពុងដំណើរការផុស...');
+    
+    const targetUrl = videoLink || 'https://facebook.com'; // កំណត់ Link ដែលចង់ឱ្យគេចុច
+    
+    // រៀបចំ Card ទាំង២ (ប្រើ Placeholder សម្រាប់ធ្វើតេស្តសិន)
+    const attachments = [
+      {
+        link: targetUrl,
+        name: caption || 'ចុចមើលវីដេអូ',
+        picture: 'https://placehold.co/600x400/000000/FFFFFF/png?text=Video+Thumbnail', 
+      },
+      {
+        link: `https://facebook.com/${selectedPage.id}`,
+        name: 'ចុច Like Page ដើម្បីបានវីដេអូថ្មីៗ',
+        picture: 'https://placehold.co/600x400/d1e7ff/224078/png?text=Like+Page', 
+      }
+    ];
+
+    window.FB.api(
+      `/${selectedPage.id}/feed`,
+      'POST',
+      {
+        message: caption,
+        link: targetUrl,
+        child_attachments: JSON.stringify(attachments),
+        access_token: selectedPage.access_token
+      },
+      (response) => {
+        if (response && !response.error) {
+          setStatus('✅ ផុសជោគជ័យ! សូមចូលទៅឆែកមើលក្នុង Page។');
+          setCaption('');
+        } else {
+          console.error(response.error);
+          setStatus('❌ បរាជ័យ: ' + (response.error.message || 'Unknown Error'));
+        }
+      }
+    );
   };
 
   return (
     <div style={{ maxWidth: '480px', margin: '0 auto', fontFamily: 'sans-serif', background: '#fff', minHeight: '100vh' }}>
       
-      {/* 🔴 MENU SCREEN 🔴 */}
+      {/* MENU SCREEN */}
       {currentPage === 'menu' && (
         <div style={{ padding: '15px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
             <h1 style={{ color: '#224078', fontSize: '24px', fontWeight: 'bold', margin: 0 }}>Master <span style={{fontStyle: 'italic', fontWeight: 'normal'}}>Post</span></h1>
             <div style={{ display: 'flex', gap: '15px', fontSize: '20px' }}><span>☕</span><span>🌐</span></div>
           </div>
-          
           <div style={{ background: '#7EEDB2', padding: '15px', borderRadius: '12px', color: '#1a3059', marginBottom: '20px', textAlign: 'center', boxShadow: '0 4px 10px rgba(126, 237, 178, 0.3)' }}>
-            <strong style={{ fontSize: '16px' }}>Soundy AI: Noise Remover</strong><br/>
-            <span style={{ fontSize: '13px' }}>លុបសំឡេងរំខានចេញភ្លាមៗ!</span>
+            <strong style={{ fontSize: '16px' }}>Soundy AI: Noise Remover</strong><br/><span style={{ fontSize: '13px' }}>លុបសំឡេងរំខានចេញភ្លាមៗ!</span>
           </div>
-
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-            <div onClick={() => { setCurrentPage('powerEditor'); setPowerStep(1); }} style={cardStyle}>
-              <span style={{fontSize: '38px'}}>📘</span><br/><span style={{marginTop: '8px', display: 'block'}}>Power Editor</span>
-            </div>
+            <div onClick={() => { setCurrentPage('powerEditor'); setPowerStep(1); }} style={cardStyle}><span style={{fontSize: '38px'}}>📘</span><br/><span style={{marginTop: '8px', display: 'block'}}>Power Editor</span></div>
             <div style={cardStyle}><span style={{fontSize: '38px'}}>🎬</span><br/><span style={{marginTop: '8px', display: 'block'}}>Post Videos</span></div>
             <div style={cardStyle}><span style={{fontSize: '38px'}}>📊</span><br/><span style={{marginTop: '8px', display: 'block'}}>Soundy AI</span></div>
             <div style={cardStyle}><span style={{fontSize: '38px'}}>📥</span><br/><span style={{marginTop: '8px', display: 'block'}}>Get Videos</span></div>
@@ -127,17 +140,14 @@ function App() {
         </div>
       )}
 
-      {/* 🔴 POWER EDITOR SCREEN 🔴 */}
+      {/* POWER EDITOR SCREEN */}
       {currentPage === 'powerEditor' && (
         <div style={{ background: '#f8f9fa', minHeight: '100vh', paddingBottom: '30px' }}>
-          
-          {/* Header */}
           <div style={{ background: '#224078', color: '#fff', padding: '15px 20px', display: 'flex', alignItems: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
             <div onClick={() => powerStep === 1 ? setCurrentPage('menu') : setPowerStep(1)} style={{ cursor: 'pointer', marginRight: '20px', fontSize: '16px' }}>❮ Back</div>
             <div style={{ fontWeight: 'bold', fontSize: '18px' }}>{powerStep === 1 ? 'Power Editor' : 'Video Information'}</div>
           </div>
 
-          {/* Step 1: Upload Video */}
           {powerStep === 1 && (
             <div style={{ padding: '20px' }}>
               <div style={addAccountBoxStyle} onClick={handleLogin}>
@@ -148,31 +158,19 @@ function App() {
                   </div>
                 ) : '+ Add Account'}
               </div>
-
               <div style={{ background: '#fff', padding: '30px 20px', borderRadius: '15px', marginBottom: '20px', border: '1px solid #eee', textAlign: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.03)' }}>
                 <input type="file" id="vPicker" accept="video/*" style={{ display: 'none' }} onChange={handleFileChange} />
-                <label htmlFor="vPicker" style={selectBtnStyle}>
-                  {videoPreview ? 'Change Video File' : 'Select Video File'}
-                </label>
-                
+                <label htmlFor="vPicker" style={selectBtnStyle}>{videoPreview ? 'Change Video File' : 'Select Video File'}</label>
                 <div style={{ margin: '20px 0', color: '#aaa', fontWeight: 'bold', fontSize: '14px' }}>OR</div>
-                
-                <input 
-                  type="text" 
-                  placeholder="PLEASE INPUT VIDEO URL" 
-                  style={urlInputStyle} 
-                  value={videoLink} 
-                  onChange={(e) => { setVideoLink(e.target.value); setVideoPreview(null); }} 
-                />
+                <input type="text" placeholder="PLEASE INPUT VIDEO URL" style={urlInputStyle} value={videoLink} onChange={(e) => { setVideoLink(e.target.value); setVideoPreview(null); }} />
               </div>
               <button style={uploadBtnStyle} onClick={goToPostStep}>UPLOAD VIDEO</button>
             </div>
           )}
 
-          {/* Step 2: Post Information */}
           {powerStep === 2 && (
             <div style={{ padding: '20px' }}>
-              
+              {/* Card-based Page Selector */}
               <div style={{ marginBottom: '15px' }}>
                 <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: 'bold' }}>ជ្រើសរើស Page៖</div>
                 <div style={{ display: 'flex', overflowX: 'auto', gap: '12px', paddingBottom: '10px' }}>
@@ -183,8 +181,7 @@ function App() {
                       style={{ 
                         minWidth: '80px', padding: '12px 8px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center',
                         border: `2px solid ${selectedPage?.id === p.id ? '#7EEDB2' : '#eee'}`, 
-                        background: selectedPage?.id === p.id ? '#224078' : '#fff', 
-                        color: selectedPage?.id === p.id ? '#fff' : '#444'
+                        background: selectedPage?.id === p.id ? '#224078' : '#fff', color: selectedPage?.id === p.id ? '#fff' : '#444'
                       }}
                     >
                       <img src={p.picture?.data?.url} style={{ width: '40px', height: '40px', borderRadius: '50%', marginBottom: '5px', border: selectedPage?.id === p.id ? '2px solid #7EEDB2' : 'none' }} alt="" />
@@ -194,56 +191,34 @@ function App() {
                 </div>
               </div>
 
-              <textarea 
-                placeholder="Write caption here..." 
-                style={{ width: '100%', height: '90px', border: '1px solid #eee', borderRadius: '12px', padding: '15px', outline: 'none', background: '#fff', fontSize: '14px', boxSizing: 'border-box', marginBottom: '20px', resize: 'none' }} 
-                value={caption} 
-                onChange={(e) => setCaption(e.target.value)} 
-              />
+              <textarea placeholder="Write caption here..." style={{ width: '100%', height: '90px', border: '1px solid #eee', borderRadius: '12px', padding: '15px', outline: 'none', background: '#fff', fontSize: '14px', boxSizing: 'border-box', marginBottom: '20px', resize: 'none' }} value={caption} onChange={(e) => setCaption(e.target.value)} />
               
               <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', marginBottom: '25px', paddingBottom: '5px' }}>
-                {/* ផ្នែក Preview វីដេអូ */}
                 <div style={previewCardStyle}>
                   <div style={{ height: '220px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {videoPreview ? (
-                      <video src={videoPreview} style={{width: '100%', height: '100%', objectFit: 'cover'}} controls />
-                    ) : (
-                      <div style={{color: '#fff', textAlign: 'center', padding: '20px'}}>
-                        <span style={{fontSize: '30px', display: 'block', marginBottom: '10px'}}>🔗</span>
-                        {videoLink ? "Link Ready" : "No Video"}
-                      </div>
-                    )}
+                    {videoPreview ? <video src={videoPreview} style={{width: '100%', height: '100%', objectFit: 'cover'}} controls /> : <div style={{color: '#fff', textAlign: 'center', padding: '20px'}}><span style={{fontSize: '30px', display: 'block', marginBottom: '10px'}}>🔗</span>{videoLink ? "Link Ready" : "No Video"}</div>}
                   </div>
                   <div style={{ padding: '12px', fontSize: '12px', display: 'flex', justifyContent: 'space-between', background: '#fff', fontWeight: 'bold' }}>
                     <span>ចុច Like Page ដើម្បីបានវីដេអូថ្មីៗ</span> <span style={{color: '#224078', fontSize: '14px'}}>👍</span>
                   </div>
                 </div>
 
-                {/* ផ្នែក Preview ឈ្មោះ Page */}
                 <div style={previewCardStyle}>
                   <div style={{ height: '220px', background: '#eef2f9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                    {selectedPage ? (
-                      <>
-                        <img src={selectedPage?.picture?.data?.url} style={{width: '70px', height: '70px', borderRadius: '50%', marginBottom: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)'}} alt="" />
-                        <div style={{fontWeight: 'bold', color: '#224078', fontSize: '14px'}}>{selectedPage.name}</div>
-                      </>
-                    ) : (
-                      <div style={{color: '#888'}}>PREVIEW</div>
-                    )}
+                    {selectedPage ? <><img src={selectedPage?.picture?.data?.url} style={{width: '70px', height: '70px', borderRadius: '50%', marginBottom: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.1)'}} alt="" /><div style={{fontWeight: 'bold', color: '#224078', fontSize: '14px'}}>{selectedPage.name}</div></> : <div style={{color: '#888'}}>PREVIEW</div>}
                   </div>
-                  <div style={{ padding: '12px', fontSize: '12px', background: '#fff', color: '#666', borderTop: '1px solid #eee' }}>
-                    {selectedPage ? selectedPage.name : "Page Name"}
-                  </div>
+                  <div style={{ padding: '12px', fontSize: '12px', background: '#fff', color: '#666', borderTop: '1px solid #eee' }}>{selectedPage ? selectedPage.name : "Page Name"}</div>
                 </div>
               </div>
 
-              <button style={uploadBtnStyle} onClick={() => alert('មុខងារតភ្ជាប់ API កំពុងរៀបចំ...')}>POST NOW</button>
+              {/* 🔴 ប៊ូតុង និងស្ថានភាពផុស */}
+              <button style={uploadBtnStyle} onClick={handlePostNow}>POST NOW</button>
+              {status && <div style={{textAlign: 'center', marginTop: '15px', fontWeight: 'bold', fontSize: '14px', color: status.includes('✅') ? '#28a745' : '#dc3545'}}>{status}</div>}
             </div>
           )}
 
         </div>
       )}
-
     </div>
   );
 }
