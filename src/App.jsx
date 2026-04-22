@@ -1,5 +1,31 @@
 import React, { useState, useEffect } from 'react';
 
+// --- 🔴 រំកិល Styles មកដាក់លើគេ ដើម្បីកុំឱ្យ Error សសុទ្ធ ---
+const cardStyle = { 
+  background: '#fff', padding: '25px 10px', borderRadius: '16px', textAlign: 'center', 
+  boxShadow: '0 2px 12px rgba(0,0,0,0.04)', cursor: 'pointer', fontWeight: 'bold', color: '#333', border: '1px solid #f4f4f4' 
+};
+const addAccountBoxStyle = { 
+  background: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '15px', 
+  border: '1px solid #e0e0e0', textAlign: 'center', cursor: 'pointer', color: '#666', fontWeight: 'bold' 
+};
+const selectBtnStyle = { 
+  display: 'inline-block', padding: '12px 30px', border: '2px solid #224078', color: '#224078', 
+  borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: 'all 0.2s' 
+};
+const urlInputStyle = { 
+  width: '100%', padding: '16px', borderRadius: '10px', border: '1px solid #e0e0e0', 
+  boxSizing: 'border-box', outline: 'none', background: '#fcfcfc', fontSize: '14px' 
+};
+const uploadBtnStyle = { 
+  width: '100%', padding: '18px', background: '#224078', color: '#7EEDB2', border: 'none', 
+  borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(34, 64, 120, 0.3)' 
+};
+const previewCardStyle = { 
+  minWidth: '220px', maxWidth: '250px', background: '#fff', borderRadius: '12px', overflow: 'hidden', 
+  border: '1px solid #eee', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', flex: '0 0 auto' 
+};
+
 // 🔴 App ID របស់បង
 const FACEBOOK_APP_ID = '1520516662947333';
 
@@ -36,7 +62,7 @@ function App() {
     window.FB.api('/me', {fields: 'name,picture'}, (u) => { setUserData(u); setIsLoggedIn(true); });
     window.FB.api('/me/accounts', {fields: 'name,access_token,id,picture', limit: 100}, (p) => { 
       setPages(p.data || []); 
-      if(p.data && p.data.length > 0) setSelectedPage(p.data[0]); // Auto select first page
+      if(p.data && p.data.length > 0) setSelectedPage(p.data[0]); 
     });
   };
 
@@ -124,18 +150,13 @@ function App() {
             />
           </div>
           <button style={uploadBtnStyle} onClick={goToPostStep}>UPLOAD VIDEO</button>
-          
-          <div style={{textAlign: 'center', marginTop: '20px'}}>
-            <a href="#" style={{fontSize: '14px', color: '#224078', textDecoration: 'underline'}}>How to use it?</a>
-          </div>
         </div>
       ) : (
         <div style={{ padding: '20px' }}>
           
-          {/* Card-based Page Selector */}
           <div style={{ marginBottom: '15px' }}>
             <div style={{ fontSize: '13px', color: '#666', marginBottom: '8px', fontWeight: 'bold' }}>ជ្រើសរើស Page៖</div>
-            <div style={{ display: 'flex', overflowX: 'auto', gap: '12px', paddingBottom: '10px', WebkitOverflowScrolling: 'touch' }}>
+            <div style={{ display: 'flex', overflowX: 'auto', gap: '12px', paddingBottom: '10px' }}>
               {pages.map(p => (
                 <div 
                   key={p.id} 
@@ -144,12 +165,10 @@ function App() {
                     minWidth: '80px', padding: '12px 8px', borderRadius: '12px', cursor: 'pointer', textAlign: 'center',
                     border: `2px solid ${selectedPage?.id === p.id ? '#7EEDB2' : '#eee'}`, 
                     background: selectedPage?.id === p.id ? '#224078' : '#fff', 
-                    color: selectedPage?.id === p.id ? '#fff' : '#444',
-                    boxShadow: selectedPage?.id === p.id ? '0 4px 10px rgba(34, 64, 120, 0.2)' : 'none',
-                    transition: 'all 0.2s ease'
+                    color: selectedPage?.id === p.id ? '#fff' : '#444'
                   }}
                 >
-                  <img src={p.picture?.data?.url} style={{ width: '40px', height: '40px', borderRadius: '50%', marginBottom: '5px', border: selectedPage?.id === p.id ? '2px solid #7EEDB2' : 'none' }} alt="" />
+                  <img src={p.picture?.data?.url} style={{ width: '40px', height: '40px', borderRadius: '50%', marginBottom: '5px' }} alt="" />
                   <div style={{ fontSize: '11px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '70px', margin: '0 auto' }}>{p.name}</div>
                 </div>
               ))}
@@ -163,11 +182,9 @@ function App() {
             onChange={(e) => setCaption(e.target.value)} 
           />
           
-          {/* PE Preview Cards */}
           <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', marginBottom: '25px', paddingBottom: '5px' }}>
-            {/* Card 1: វីដេអូ */}
             <div style={previewCardStyle}>
-              <div style={{ height: '220px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
+              <div style={{ height: '220px', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 {videoPreview ? (
                   <video src={videoPreview} style={{width: '100%', height: '100%', objectFit: 'cover'}} controls />
                 ) : (
@@ -177,17 +194,16 @@ function App() {
                   </div>
                 )}
               </div>
-              <div style={{ padding: '12px', fontSize: '12px', display: 'flex', justifyContent: 'space-between', background: '#fff', fontWeight: 'bold', color: '#333' }}>
+              <div style={{ padding: '12px', fontSize: '12px', display: 'flex', justifyContent: 'space-between', background: '#fff', fontWeight: 'bold' }}>
                 <span>ចុច Like Page ដើម្បីបានវីដេអូថ្មីៗ</span> <span style={{color: '#224078', fontSize: '14px'}}>👍</span>
               </div>
             </div>
 
-            {/* Card 2: ឈ្មោះ Page */}
             <div style={previewCardStyle}>
               <div style={{ height: '220px', background: '#eef2f9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                 {selectedPage ? (
                   <>
-                    <img src={selectedPage.picture?.data?.url} style={{width: '70px', height: '70px', borderRadius: '50%', boxShadow: '0 4px 10px rgba(0,0,0,0.1)', marginBottom: '10px'}} alt="" />
+                    <img src={selectedPage?.picture?.data?.url} style={{width: '70px', height: '70px', borderRadius: '50%', marginBottom: '10px'}} alt="" />
                     <div style={{fontWeight: 'bold', color: '#224078', fontSize: '14px'}}>{selectedPage.name}</div>
                   </>
                 ) : (
@@ -200,37 +216,11 @@ function App() {
             </div>
           </div>
 
-          <button style={uploadBtnStyle} onClick={() => alert('មុខងារតភ្ជាប់ API ទៅ Facebook កំពុងរៀបចំ...')}>POST NOW</button>
+          <button style={uploadBtnStyle} onClick={() => alert('មុខងារតភ្ជាប់ API កំពុងរៀបចំ...')}>POST NOW</button>
         </div>
       )}
     </div>
   );
 }
-
-// --- Styles ---
-const cardStyle = { 
-  background: '#fff', padding: '25px 10px', borderRadius: '16px', textAlign: 'center', 
-  boxShadow: '0 2px 12px rgba(0,0,0,0.04)', cursor: 'pointer', fontWeight: 'bold', color: '#333', border: '1px solid #f4f4f4' 
-};
-const addAccountBoxStyle = { 
-  background: '#fff', padding: '20px', borderRadius: '12px', marginBottom: '15px', 
-  border: '1px solid #e0e0e0', textAlign: 'center', cursor: 'pointer', color: '#666', fontWeight: 'bold' 
-};
-const selectBtnStyle = { 
-  display: 'inline-block', padding: '12px 30px', border: '2px solid #224078', color: '#224078', 
-  borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px', transition: 'all 0.2s' 
-};
-const urlInputStyle = { 
-  width: '100%', padding: '16px', borderRadius: '10px', border: '1px solid #e0e0e0', 
-  boxSizing: 'border-box', outline: 'none', background: '#fcfcfc', fontSize: '14px' 
-};
-const uploadBtnStyle = { 
-  width: '100%', padding: '18px', background: '#224078', color: '#7EEDB2', border: 'none', 
-  borderRadius: '12px', fontWeight: 'bold', fontSize: '16px', cursor: 'pointer', boxShadow: '0 4px 12px rgba(34, 64, 120, 0.3)' 
-};
-const previewCardStyle = { 
-  minWidth: '220px', maxWidth: '250px', background: '#fff', borderRadius: '12px', overflow: 'hidden', 
-  border: '1px solid #eee', boxShadow: '0 4px 12px rgba(0,0,0,0.05)', flex: '0 0 auto' 
-};
 
 export default App;
